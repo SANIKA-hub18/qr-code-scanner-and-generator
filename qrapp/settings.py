@@ -14,9 +14,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Quick-start development settings - unsuitable for production
 SECRET_KEY = 'django-insecure-c5)td6nx+c#n36_i_jn#&q7af98i#&^bxvr_rif!&+n9d9rt_+'
 DEBUG = True
-ALLOWED_HOSTS = []
-
-
+ALLOWED_HOSTS = ['qr-code-scanner-and-generator.onrender.com', 'localhost', '127.0.0.1']
 # Application definition
 INSTALLED_APPS = [
     'django.contrib.admin',
