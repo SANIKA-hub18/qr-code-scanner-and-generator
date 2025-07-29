@@ -62,6 +62,7 @@ function camera(){
     let constraints = { 
       audio: false, 
       video: {
+        facingMode: { ideal: "environment" },
         width: { min: 400, ideal: 400, max: 400 },
         height: { min: 400, ideal: 400, max: 400 },
     }
