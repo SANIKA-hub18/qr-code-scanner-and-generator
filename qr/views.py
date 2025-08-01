@@ -1,12 +1,19 @@
+from django.shortcuts import render
 from django.views.generic import TemplateView
+from django.views import View
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+from django.utils.decorators import method_decorator
+from .models import Muster  # तुमचा model import करा
+
 import qrcode
 import qrcode.image.svg
 from io import BytesIO
 import base64
 import numpy as np
-import cv2  # ✅ Using OpenCV instead of pyzbar
+import cv2
 from PIL import Image
-from django.http import HttpResponse
+import json
 
 
 class QrCodeView(TemplateView):
@@ -27,30 +34,44 @@ class QrCodeView(TemplateView):
         return 'data:image/svg+xml;utf8;base64,' + base64_image
 
 
-class QrCodeScan(TemplateView):
-    template_name = 'qrscanner.html'
+@method_decorator(csrf_exempt, name='dispatch')  # CSRF exemption for class based view
+class QrCodeScan(View):
+
+    def get(self, request):
+        return render(request, 'qrscanner.html')  # तुमचा scanner चा template
 
     def post(self, request):
-        image = request.POST['image']
-        image_data = base64.b64decode(image.split(',')[1])
+        try:
+            data_json = json.loads(request.body)  # JSON मध्ये data येईल असं assume
+            image_data = data_json.get('image')
+            if not image_data:
+                return JsonResponse({'status': 'fail', 'message': 'No image found'}, status=400)
 
-        img = BytesIO(image_data)
-        data = self.qrcodeReader(img)
-        if data is False:
-            return HttpResponse('No Qr code found! Sorry.')
-        return HttpResponse(data)
+            # Base64 image decode करा
+            image_bytes = base64.b64decode(image_data.split(',')[1])
+            img = BytesIO(image_bytes)
+
+            # QR code वाचा
+            qr_text = self.qrcodeReader(img)
+
+            if qr_text:
+                # DB मध्ये save करा
+                muster_obj = Muster.objects.create(data=qr_text)
+                return JsonResponse({'status': 'success', 'data': qr_text, 'id': muster_obj.id})
+            else:
+                return JsonResponse({'status': 'fail', 'message': 'No QR code detected'}, status=400)
+
+        except Exception as e:
+            return JsonResponse({'status': 'fail', 'message': f'Exception occurred: {str(e)}'}, status=500)
 
     def qrcodeReader(self, img):
-        # Read the uploaded image with Pillow
-        image = Image.open(img).convert('RGB')
-        # Convert to NumPy array (OpenCV format)
-        np_image = np.array(image)
-        # Convert RGB to BGR (as OpenCV uses BGR format)
-        bgr_image = cv2.cvtColor(np_image, cv2.COLOR_RGB2BGR)
-        
-        detector = cv2.QRCodeDetector()
-        data, bbox, _ = detector.detectAndDecode(bgr_image)
-        if data:
-            return data
-        else:
-            return False
+        try:
+            image = Image.open(img).convert('RGB')
+            np_image = np.array(image)
+            bgr_image = cv2.cvtColor(np_image, cv2.COLOR_RGB2BGR)
+            detector = cv2.QRCodeDetector()
+            data, bbox, _ = detector.detectAndDecode(bgr_image)
+            return data if data else None
+        except Exception as e:
+            print("Error in QR decode:", str(e))
+            return None
