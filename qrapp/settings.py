@@ -5,7 +5,7 @@ from dotenv import load_dotenv
 
 SECRET_KEY = 'django-insecure-c5)td6nx+c#n36_i_jn#&q7af98i#&^bxvr_rif!&+n9d9rt_+'
 DEBUG = False
-ALLOWED_HOSTS = ['qr-code-scanner-and-generator.onrender.com', 'localhost', '127.0.0.1']
+ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', '127.0.0.1').split(',')
 
 INSTALLED_APPS = [
     'django.contrib.admin',
