@@ -139,7 +139,7 @@
       }
 
       function sendQRImage(base64Image) {
-        fetch("/qr/scan/", {  // URL तुमच्या urls.py प्रमाणे adjust करा
+        fetch("/qr/scan/", {  
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -154,7 +154,7 @@
             console.log("Response from server:", data);
             if (data.status === "success") {
               alert("Saved to DB: " + data.data);
-              location.reload(); // किंवा इथे हवे तर काही वेगळं करा
+              location.reload(); 
             } else {
               alert("Failed: " + data.message);
             }

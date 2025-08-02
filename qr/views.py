@@ -4,7 +4,7 @@ from django.views import View
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
-from .models import Muster  # तुमचा model import करा
+from .models import Muster  
 
 import qrcode
 import qrcode.image.svg
@@ -34,28 +34,27 @@ class QrCodeView(TemplateView):
         return 'data:image/svg+xml;utf8;base64,' + base64_image
 
 
-@method_decorator(csrf_exempt, name='dispatch')  # CSRF exemption for class based view
+@method_decorator(csrf_exempt, name='dispatch')  
 class QrCodeScan(View):
 
     def get(self, request):
-        return render(request, 'qrscanner.html')  # तुमचा scanner चा template
-
+        return render(request, 'qrscanner.html')  
     def post(self, request):
         try:
-            data_json = json.loads(request.body)  # JSON मध्ये data येईल असं assume
+            data_json = json.loads(request.body)  
             image_data = data_json.get('image')
             if not image_data:
                 return JsonResponse({'status': 'fail', 'message': 'No image found'}, status=400)
 
-            # Base64 image decode करा
+           
             image_bytes = base64.b64decode(image_data.split(',')[1])
             img = BytesIO(image_bytes)
 
-            # QR code वाचा
+            
             qr_text = self.qrcodeReader(img)
 
             if qr_text:
-                # DB मध्ये save करा
+                
                 muster_obj = Muster.objects.create(data=qr_text)
                 return JsonResponse({'status': 'success', 'data': qr_text, 'id': muster_obj.id})
             else:
